@@ -6,13 +6,33 @@ plugins {
 // 💡 引入根目录的全局配置中心
 apply from: '../config.gradle'
 
-// 💡 编译期安全读取本地 .github_token 文件，避免在源码中硬编码敏感凭证
+// 💡 编译期安全读取 GitHub 凭证。优先从环境变量读取（适配 CI），其次读取本地文件，若均为空则抛出致命错误阻断编译，防止生成无 Token 的损坏版本
 def getGithubToken() {
+    // 1. 优先读取系统环境变量（适配 GitHub Actions CI/CD 流水线）
+    def envToken = System.getenv("GITHUB_TOKEN")
+    if (envToken != null && !envToken.trim().isEmpty()) {
+        return envToken.trim()
+    }
+    
+    // 2. 其次尝试读取本地根目录的 .github_token 文件
     def tokenFile = rootProject.file('.github_token')
     if (tokenFile.exists()) {
-        return tokenFile.text.trim()
+        def fileToken = tokenFile.text.trim()
+        if (!fileToken.isEmpty()) {
+            return fileToken
+        }
     }
-    return ""
+    
+    // 3. 致命防呆拦截：若两者都为空，直接抛出编译异常，强行终止打包
+    throw new org.gradle.api.GradleException(
+        "\n=========================================================================\n" +
+        "❌ [CRITICAL ERROR] 编译被拦截：未检测到任何有效的 GitHub Token 凭证！\n\n" +
+        "原因：本项目是完全由数据驱动的私有商店，必须注入有效的 Token 才能正常加载数据和下载 APK。\n" +
+        "解决办法：\n" +
+        "  👉 [本地开发]：请在项目根目录下创建一个名为 '.github_token' 的文件，并粘贴您的 GitHub 个人访问令牌（PAT，具有 repo 只读权限）。\n" +
+        "  👉 [云端编译 (GitHub Actions)]：请在您的 GitHub 仓库的 Settings -> Secrets and variables -> Actions 中添加一个名为 'PERSONAL_ACCESS_TOKEN' 的 Repository Secret，云端脚本会自动将其作为环境变量注入编译。\n" +
+        "========================================================================="
+    )
 }
 
 android {

@@ -30,6 +30,9 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew assembleDebug
+      env:
+        # 💡 核心安全注入：优先读取用户配置的具有多仓库读取权限的个人访问令牌（PAT），如未配置则退回到当前仓库默认的 GITHUB_TOKEN
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
 
     # 💡 解析 config.gradle 中的版本号
     - name: Parse Metadata from config.gradle
