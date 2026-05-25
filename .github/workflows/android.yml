@@ -1,0 +1,53 @@
+name: Android CI/CD Auto-Release
+
+on:
+  push:
+    # 💡 只有在向 main 分支推送且带有版本号标签 (如 v1.0.3) 时，才触发打包并自动发布 Release 逻辑
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    # 💡 授予 Gradle 运行权限
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug
+
+    # 💡 解析 config.gradle 中的应用名和版本号
+    - name: Parse Metadata from config.gradle
+      id: get_metadata
+      run: |
+        VERSION_NAME=$(grep "versionName" config.gradle | head -n 1 | awk -F'"' '{print $2}')
+        APP_NAME=$(grep "appName" config.gradle | head -n 1 | awk -F'"' '{print $2}')
+        # 将解析出来的元数据输出给下一步
+        echo "VERSION=$VERSION_NAME" >> $GITHUB_OUTPUT
+        echo "NAME=$APP_NAME" >> $GITHUB_OUTPUT
+
+    # 💡 创建全新的 GitHub Release 并自动挂载打包出来的 debug APK，供手机端检测更新下载
+    - name: Create GitHub Release and Upload APK
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.get_metadata.outputs.VERSION }}
+        name: "${{ steps.get_metadata.outputs.NAME }} v${{ steps.get_metadata.outputs.VERSION }}"
+        files: app/build/outputs/apk/debug/app-debug.apk
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

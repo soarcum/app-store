@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' } // 支持三方库，例如 Jitpack
+    }
+}
+
+// 💡 导入全局配置文件，使 Gradle 可以共享配置属性
+apply from: 'config.gradle'
+
+rootProject.name = appName
+include ':app'

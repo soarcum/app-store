@@ -1,0 +1,89 @@
+name: Auto-Init New Repository from Template
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  auto-init:
+    # 💡 确保当前执行的不是模板仓库自身 (请在此配置您模板的 GitHub 路径，防止模板自身被误修改)
+    if: github.repository != 'your_github_username/android-boilerplate' && github.repository != 'slowpack/listener'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check if already initialized
+      id: check_state
+      run: |
+        # 💡 如果 config.gradle 中 applicationId 不是默认的 com.template.app，说明已经被初始化重构过，直接跳过，防止死循环
+        if ! grep -q "com.template.app" config.gradle; then
+          echo "ALREADY_INITIALIZED=true" >> $GITHUB_ENV
+          echo "项目已初始化过包名，跳过重构。"
+        else
+          echo "ALREADY_INITIALIZED=false" >> $GITHUB_ENV
+          echo "开始进行云端项目包名深度重构..."
+        fi
+
+    - name: Run Cloud Remap and Rename
+      if: env.ALREADY_INITIALIZED == 'false'
+      run: |
+        # 1. 提取当前新仓库所有者与项目名称
+        OWNER_RAW="${{ github.repository_owner }}"
+        REPO_RAW="${{ github.event.repository.name }}"
+        
+        # 2. 规范化为合法的 Android 包名格式 (全小写且仅保留英文字母和数字)
+        OWNER_CLEAN=$(echo "$OWNER_RAW" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+        REPO_CLEAN=$(echo "$REPO_RAW" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+        
+        NEW_PACKAGE="com.$OWNER_CLEAN.$REPO_CLEAN"
+        NEW_APP_NAME="$REPO_RAW"
+        
+        echo "💡 生成的新应用包名: $NEW_PACKAGE"
+        echo "💡 生成的新应用名称: $NEW_APP_NAME"
+        
+        OLD_PACKAGE="com.template.app"
+        OLD_PATH="com/template/app"
+        NEW_PATH="com/$OWNER_CLEAN/$REPO_CLEAN"
+        
+        # 3. 全局批量文本替换包名和应用名称
+        find . -type f \( -name "*.kt" -o -name "*.xml" -o -name "*.gradle" -o -name "*.properties" \) ! -path "*/.git/*" -exec sed -i "s/$OLD_PACKAGE/$NEW_PACKAGE/g" {} +
+        
+        # 4. 更新 config.gradle 中的应用变量
+        sed -i "s/applicationId = \".*\"/applicationId = \"$NEW_PACKAGE\"/g" config.gradle
+        sed -i "s/appName = \".*\"/appName = \"$NEW_APP_NAME\"/g" config.gradle
+        sed -i "s/githubOwner = \".*\"/githubOwner = \"$OWNER_RAW\"/g" config.gradle
+        sed -i "s/githubRepo = \".*\"/githubRepo = \"$REPO_RAW\"/g" config.gradle
+        
+        # 5. 重构 Java/Kotlin 物理源码树目录结构
+        SOURCE_DIRS=("app/src/main/java" "app/src/androidTest/java" "app/src/test/java")
+        for BASE in "${SOURCE_DIRS[@]}"; do
+          if [ -d "$BASE" ]; then
+            OLD_FULL_DIR="$BASE/$OLD_PATH"
+            NEW_FULL_DIR="$BASE/$NEW_PATH"
+            if [ -d "$OLD_FULL_DIR" ]; then
+              mkdir -p "$NEW_FULL_DIR"
+              cp -r "$OLD_FULL_DIR"/* "$NEW_FULL_DIR"/
+              rm -rf "$OLD_FULL_DIR"
+              # 清理空的上级遗留文件夹
+              rmdir -p "$OLD_FULL_DIR" 2>/dev/null || true
+            fi
+          fi
+        done
+        
+    - name: Commit and Push changes
+      if: env.ALREADY_INITIALIZED == 'false'
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "chore: auto-initialize project package and directory naming from template"
+        git push origin main

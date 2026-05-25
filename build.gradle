@@ -1,0 +1,15 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // 使用与原有系统兼容稳定的 Gradle 8.5.0 和 Kotlin 1.9.22 版本
+        classpath 'com.android.tools.build:gradle:8.5.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22"
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.layout.buildDirectory
+}
