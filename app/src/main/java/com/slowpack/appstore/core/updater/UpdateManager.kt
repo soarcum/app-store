@@ -1,4 +1,4 @@
-﻿package com.slowpack.androidtemplate.core.updater
+package com.slowpack.appstore.core.updater
 
 import android.content.Context
 import android.content.Intent
@@ -8,7 +8,7 @@ import android.os.Build
 import android.os.Environment
 import android.util.Log
 import androidx.core.content.FileProvider
-import com.slowpack.androidtemplate.BuildConfig
+import com.slowpack.appstore.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient

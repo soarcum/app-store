@@ -1,4 +1,4 @@
-﻿package com.slowpack.androidtemplate.core.crash
+package com.slowpack.appstore.core.crash
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -43,7 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.slowpack.androidtemplate.core.theme.AppTheme
+import com.slowpack.appstore.core.theme.AppTheme
 
 /**
  * 💡 崩溃显示界面 (独立进程 `:crash` 运行，极其稳定可靠)
