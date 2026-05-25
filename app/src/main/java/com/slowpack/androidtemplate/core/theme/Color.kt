@@ -1,4 +1,4 @@
-package com.slowpack.androidtemplate.core.theme
+﻿package com.slowpack.androidtemplate.core.theme
 
 import androidx.compose.ui.graphics.Color
 
@@ -19,3 +19,4 @@ val LightBackground = Color(0xFFFBF8FD)
 val LightSurface = Color(0xFFF3EDF7)
 val LightOnBackground = Color(0xFF1C1B1F)
 val LightOnSurface = Color(0xFF1C1B1F)
+

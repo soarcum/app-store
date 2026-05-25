@@ -1,4 +1,4 @@
-package com.slowpack.androidtemplate
+﻿package com.slowpack.androidtemplate
 
 import android.os.Bundle
 import android.widget.Toast
@@ -465,3 +465,4 @@ fun DownloadProgressOverlay(downloadState: DownloadState) {
         }
     }
 }
+

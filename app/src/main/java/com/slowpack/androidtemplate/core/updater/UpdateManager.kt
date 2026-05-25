@@ -1,4 +1,4 @@
-package com.slowpack.androidtemplate.core.updater
+﻿package com.slowpack.androidtemplate.core.updater
 
 import android.content.Context
 import android.content.Intent
@@ -315,3 +315,4 @@ object UpdateManager {
         context.startActivity(intent)
     }
 }
+

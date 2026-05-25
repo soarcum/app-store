@@ -31,23 +31,29 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleDebug
 
-    # 💡 解析 config.gradle 中的应用名和版本号
+    # 💡 解析 config.gradle 中的版本号
     - name: Parse Metadata from config.gradle
       id: get_metadata
       run: |
         VERSION_NAME=$(grep "versionName" config.gradle | head -n 1 | awk -F'"' '{print $2}')
-        APP_NAME=$(grep "appName" config.gradle | head -n 1 | awk -F'"' '{print $2}')
-        # 将解析出来的元数据输出给下一步
+        # 将解析出来的版本号输出给下一步
         echo "VERSION=$VERSION_NAME" >> $GITHUB_OUTPUT
-        echo "NAME=$APP_NAME" >> $GITHUB_OUTPUT
+
+    # 💡 复制并以英文安全的 [仓库名]-v[版本].apk 格式命名产物，100% 解决下载乱码问题
+    - name: Prepare APK Product
+      run: |
+        SAFE_NAME="${{ github.event.repository.name }}"
+        VERSION="${{ steps.get_metadata.outputs.VERSION }}"
+        cp app/build/outputs/apk/debug/app-debug.apk "${SAFE_NAME}-v${VERSION}.apk"
+        echo "APK_PATH=${SAFE_NAME}-v${VERSION}.apk" >> $GITHUB_ENV
 
     # 💡 创建全新的 GitHub Release 并自动挂载打包出来的 debug APK，供手机端检测更新下载
     - name: Create GitHub Release and Upload APK
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.get_metadata.outputs.VERSION }}
-        name: "${{ steps.get_metadata.outputs.NAME }} v${{ steps.get_metadata.outputs.VERSION }}"
-        files: app/build/outputs/apk/debug/app-debug.apk
+        name: "${{ github.event.repository.name }} v${{ steps.get_metadata.outputs.VERSION }}"
+        files: ${{ env.APK_PATH }}
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

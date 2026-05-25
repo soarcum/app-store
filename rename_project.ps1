@@ -1,115 +1,208 @@
-# 💡 Android 项目一键极速重命名脚本 (Local PowerShell Remapper)
-# 允许用户在 Fork 模板后，一键重组物理代码包名、替换代码引用、更新应用名并清理冗余！
+# 💡 Android Project Renamer & Customizer (PowerShell AI-Ready Remapper)
+# Allows users or AI to customize package names, app names, icons, and clean redundant directories safely!
+
+param(
+    [string]$NewPackage,
+    [string]$NewAppName,
+    [string]$IconPath
+)
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " 🚀 Android Boilerplate 一键项目初始化重命名工具" -ForegroundColor Cyan
+Write-Host " 🚀 Android Boilerplate Project Customizer" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
-
-# 1. 引导交互输入
-$NewPackage = Read-Host "请输入新的应用程序包名 (例如 com.example.wallet)"
-$NewAppName = Read-Host "请输入新的应用程序显示名称 (例如 每日记账)"
-
-if ([string]::IsNullOrWhiteSpace($NewPackage) -or [string]::IsNullOrWhiteSpace($NewAppName)) {
-    Write-Host "❌ 输入的内容不能为空，操作已取消。" -ForegroundColor Red
-    Exit
-}
-
-# 验证包名格式
-if ($NewPackage -notmatch "^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$") {
-    Write-Host "❌ 包名格式不合法，必须是由点分割的字母数字组合 (如 com.foo.bar)！" -ForegroundColor Red
-    Exit
-}
-
-Write-Host "`n⏳ 正在为您进行项目全局深度重构，请稍候..." -ForegroundColor Yellow
-
-$OldPackage = "com.template.app"
-$OldPackagePath = "com/template/app"
-$NewPackagePath = $NewPackage.Replace(".", "/")
 
 $TargetDir = Get-Location
 
-# 2. 批量替换文本内容中的包名和应用名称
-Write-Host "👉 步骤 1/4: 正在进行代码全局包引用和常量替换..." -ForegroundColor Gray
+# 1. Dynamically parse the old package name and old app name from config.gradle
+$ConfigFile = Join-Path $TargetDir "config.gradle"
+$OldPackage = ""
+$OldAppName = ""
 
-# 需要替换的文件类型
-$FileFilters = @("*.kt", "*.xml", "*.gradle", "*.properties")
-$FilesToProcess = Get-ChildItem -Path $TargetDir -Recurse -Include $FileFilters | Where-Object { $_.FullName -notmatch "\\build\\" -and $_.FullName -notmatch "\\\.git\\" -and $_.FullName -notmatch "\\\.gradle\\" }
-
-foreach ($File in $FilesToProcess) {
-    $Content = Get-Content -Path $File.FullName -Raw -Encoding UTF8
-    if ($Content -match $OldPackage) {
-        $Content = $Content.Replace($OldPackage, $NewPackage)
-        Set-Content -Path $File.FullName -Value $Content -Encoding UTF8
+if (Test-Path $ConfigFile) {
+    $ConfigContent = Get-Content -Path $ConfigFile -Raw -Encoding UTF8
+    
+    # Use PowerShell native -match and $Matches to avoid regex parser conflicts
+    if ($ConfigContent -match 'applicationId\s*=\s*"(.+?)"') {
+        $OldPackage = $Matches[1].Trim()
+    }
+    if ($ConfigContent -match 'appName\s*=\s*"(.+?)"') {
+        $OldAppName = $Matches[1].Trim()
     }
 }
 
-# 3. 动态更新 config.gradle 配置中心
-Write-Host "👉 步骤 2/4: 正在更新 config.gradle 配置中心..." -ForegroundColor Gray
-$ConfigFile = Join-Path $TargetDir "config.gradle"
-if (Test-Path $ConfigFile) {
-    $ConfigContent = Get-Content -Path $ConfigFile -Raw -Encoding UTF8
-    $ConfigContent = $ConfigContent -replace 'applicationId = ".*"', ('applicationId = "' + $NewPackage + '"')
-    $ConfigContent = $ConfigContent -replace 'appName = ".*"', ('appName = "' + $NewAppName + '"')
-    Set-Content -Path $ConfigFile -Value $ConfigContent -Encoding UTF8
+# Fallback default values
+if (-not $OldPackage -or $OldPackage.Trim() -eq "") { $OldPackage = "com.slowpack.androidtemplate" }
+if (-not $OldAppName -or $OldAppName.Trim() -eq "") { $OldAppName = "android-template" }
+
+# 2. Interactive prompt if params are not specified
+if (-not $NewPackage -or $NewPackage.Trim() -eq "") {
+    $NewPackage = Read-Host "Please enter the new package name (e.g. com.example.app) [Current: $OldPackage]"
+}
+if (-not $NewAppName -or $NewAppName.Trim() -eq "") {
+    $NewAppName = Read-Host "Please enter the new application display name (e.g. My App) [Current: $OldAppName]"
 }
 
-# 4. 重构物理文件夹路径 (核心魔法)
-Write-Host "👉 步骤 3/4: 正在重构 Android 项目物理包目录路径..." -ForegroundColor Gray
+if (-not $NewPackage -or -not $NewAppName -or $NewPackage.Trim() -eq "" -or $NewAppName.Trim() -eq "") {
+    Write-Host "❌ Error: Inputs cannot be empty!" -ForegroundColor Red
+    Exit
+}
 
-$SourceBaseDirs = @(
-    "app/src/main/java",
-    "app/src/androidTest/java",
-    "app/src/test/java"
-)
+# Validate package name format
+$PackageRegex = "^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$"
+if ($NewPackage -notmatch $PackageRegex) {
+    Write-Host "❌ Error: Invalid package name format!" -ForegroundColor Red
+    Exit
+}
 
-foreach ($BaseDir in $SourceBaseDirs) {
-    $FullBaseDir = Join-Path $TargetDir $BaseDir
-    if (Test-Path $FullBaseDir) {
-        $OldFullFolder = Join-Path $FullBaseDir $OldPackagePath
-        $NewFullFolder = Join-Path $FullBaseDir $NewPackagePath
+Write-Host "`n⏳ Customizing your project globally, please wait..." -ForegroundColor Yellow
+Write-Host "👉 Detected old package: $OldPackage" -ForegroundColor Gray
+Write-Host "👉 Detected old app name: $OldAppName" -ForegroundColor Gray
 
-        if (Test-Path $OldFullFolder) {
-            # 创建新的深层目录结构
-            New-Item -ItemType Directory -Force -Path $NewFullFolder | Out-Null
-            
-            # 搬运所有源码文件及子文件夹
-            Copy-Item -Path "$OldFullFolder\*" -Destination $NewFullFolder -Recurse -Force
-            
-            # 清理旧有的物理路径
-            Remove-Item -Path $OldFullFolder -Recurse -Force
-            
-            # 清理旧的空父目录 (com/template)
-            $TemplateParent = Split-Path $OldFullFolder -Parent
-            if (Test-Path $TemplateParent) {
-                $RemainingChildren = Get-ChildItem -Path $TemplateParent
-                if ($RemainingChildren.Count -eq 0) {
-                    Remove-Item -Path $TemplateParent -Force
-                }
-            }
-            $ComParent = Split-Path $TemplateParent -Parent
-            if (Test-Path $ComParent) {
-                $RemainingChildren = Get-ChildItem -Path $ComParent
-                if ($RemainingChildren.Count -eq 0) {
-                    Remove-Item -Path $ComParent -Force
+# Check if package is actually changing to avoid self-copy IOExceptions
+$PackageChanged = $true
+if ($NewPackage -eq $OldPackage) {
+    $PackageChanged = $false
+    Write-Host "👉 New package is identical to old package. Skipping source package refactoring." -ForegroundColor Yellow
+}
+
+$OldPackagePath = $OldPackage.Replace(".", "/")
+$NewPackagePath = $NewPackage.Replace(".", "/")
+
+# 3. Replace package references globally
+if ($PackageChanged) {
+    Write-Host "👉 Step 1/5: Replacing package name references in source code..." -ForegroundColor Gray
+    $FileFilters = @("*.kt", "*.xml", "*.gradle", "*.properties")
+    $FilesToProcess = Get-ChildItem -Path $TargetDir -Recurse -Include $FileFilters | Where-Object { $_.FullName -notmatch "\\build\\" -and $_.FullName -notmatch "\\\.git\\" -and $_.FullName -notmatch "\\\.gradle\\" }
+
+    foreach ($File in $FilesToProcess) {
+        $Content = Get-Content -Path $File.FullName -Raw -Encoding UTF8
+        $Modified = $false
+        
+        if ($Content -match $OldPackage) {
+            $Content = $Content.Replace($OldPackage, $NewPackage)
+            $Modified = $true
+        }
+        
+        if ($Modified) {
+            $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            [System.IO.File]::WriteAllText($File.FullName, $Content, $Utf8NoBom)
+        }
+    }
+} else {
+    Write-Host "👉 Step 1/5: Package unchanged. Skipped references replacement." -ForegroundColor Gray
+}
+
+# 4. Update config.gradle configuration center
+Write-Host "👉 Step 2/5: Updating config.gradle configuration center..." -ForegroundColor Gray
+if (Test-Path $ConfigFile) {
+    $ConfigContent = Get-Content -Path $ConfigFile -Raw -Encoding UTF8
+    $ConfigContent = $ConfigContent -replace 'applicationId\s*=\s*".*"', ('applicationId = "' + $NewPackage + '"')
+    $ConfigContent = $ConfigContent -replace 'appName\s*=\s*".*"', ('appName = "' + $NewAppName + '"')
+    $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($ConfigFile, $ConfigContent, $Utf8NoBom)
+}
+
+# 5. Sync strings.xml display name
+Write-Host "👉 Step 3/5: Updating strings.xml application display name..." -ForegroundColor Gray
+$StringsFile = Join-Path $TargetDir "app/src/main/res/values/strings.xml"
+if (Test-Path $StringsFile) {
+    $StringsContent = Get-Content -Path $StringsFile -Raw -Encoding UTF8
+    $StringsContent = $StringsContent -replace '<string name="app_name">(.+?)</string>', ('<string name="app_name">' + $NewAppName + '</string>')
+    $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($StringsFile, $StringsContent, $Utf8NoBom)
+}
+
+# 6. Configure and mount adaptive application icon
+if (-not $IconPath -or $IconPath.Trim() -eq "") {
+    # Skip icon customization since no path was provided
+} elseif (Test-Path $IconPath) {
+    Write-Host "👉 Step 3.5: Custom icon path detected, setting up adaptive icon..." -ForegroundColor Gray
+    $DrawableDir = Join-Path $TargetDir "app/src/main/res/drawable"
+    if (-not (Test-Path $DrawableDir)) {
+        New-Item -ItemType Directory -Force -Path $DrawableDir | Out-Null
+    }
+    
+    $TargetIconPath = Join-Path $DrawableDir "ic_launcher_foreground.png"
+    Copy-Item -Path $IconPath -Destination $TargetIconPath -Force
+    Write-Host "   ✔ Icon file successfully copied to: $TargetIconPath" -ForegroundColor Green
+
+    # Rewrite adaptive icon XML configurations
+    $MipmapDir = Join-Path $TargetDir "app/src/main/res/mipmap-anydpi-v26"
+    if (-not (Test-Path $MipmapDir)) {
+        New-Item -ItemType Directory -Force -Path $MipmapDir | Out-Null
+    }
+
+    $LauncherXml = '<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/white" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>'
+
+    Set-Content -Path (Join-Path $MipmapDir "ic_launcher.xml") -Value $LauncherXml -Encoding UTF8
+    Set-Content -Path (Join-Path $MipmapDir "ic_launcher_round.xml") -Value $LauncherXml -Encoding UTF8
+    Write-Host "   ✔ Adaptive icon XML configuration files updated successfully!" -ForegroundColor Green
+}
+
+# 7. Refactor physical package directory paths
+if ($PackageChanged) {
+    Write-Host "👉 Step 4/5: Refactoring physical java package directories..." -ForegroundColor Gray
+    $SourceBaseDirs = @(
+        "app/src/main/java",
+        "app/src/androidTest/java",
+        "app/src/test/java"
+    )
+
+    foreach ($BaseDir in $SourceBaseDirs) {
+        $FullBaseDir = Join-Path $TargetDir $BaseDir
+        if (Test-Path $FullBaseDir) {
+            $OldFullFolder = Join-Path $FullBaseDir $OldPackagePath
+            $NewFullFolder = Join-Path $FullBaseDir $NewPackagePath
+
+            if (Test-Path $OldFullFolder) {
+                # Create new package directory structure
+                New-Item -ItemType Directory -Force -Path $NewFullFolder | Out-Null
+                
+                # Move all source files to the new folder
+                Copy-Item -Path "$OldFullFolder\*" -Destination $NewFullFolder -Recurse -Force
+                
+                # Remove old directory
+                Remove-Item -Path $OldFullFolder -Recurse -Force
+                
+                # Recursively clean old empty parent directories up to base java dir
+                $ParentFolder = Split-Path $OldFullFolder -Parent
+                while ($ParentFolder -ne $FullBaseDir -and (Test-Path $ParentFolder)) {
+                    $RemainingChildren = Get-ChildItem -Path $ParentFolder
+                    if ($RemainingChildren.Count -eq 0) {
+                        Remove-Item -Path $ParentFolder -Force
+                        $ParentFolder = Split-Path $ParentFolder -Parent
+                    } else {
+                        break
+                    }
                 }
             }
         }
     }
+} else {
+    Write-Host "👉 Step 4/5: Package unchanged. Skipped physical directories refactoring." -ForegroundColor Gray
 }
 
-# 5. 清理本地 Gradle 编译缓存，避免混淆
-Write-Host "👉 步骤 4/4: 正在清除本地 Gradle 缓存，确保下一次编译干爽洁净..." -ForegroundColor Gray
+# 8. Clear local gradle cache
+Write-Host "👉 Step 5/5: Clearing local Gradle build cache..." -ForegroundColor Gray
 $BuildDir = Join-Path $TargetDir "app/build"
 if (Test-Path $BuildDir) {
     Remove-Item -Path $BuildDir -Recurse -Force
 }
 
 Write-Host "`n=========================================" -ForegroundColor Green
-Write-Host " 🎉 恭喜您，项目重构重命名圆满完成！" -ForegroundColor Green
-Write-Host " 包名已成功修改为: $NewPackage" -ForegroundColor Green
-Write-Host " 应用显示名已变更为: $NewAppName" -ForegroundColor Green
-Write-Host " 现在您可以用 Android Studio 重新导入并直接编写业务代码了！" -ForegroundColor Green
+Write-Host " 🎉 Congratulations! Customization Completed!" -ForegroundColor Green
+Write-Host " Package name changed to: $NewPackage" -ForegroundColor Green
+Write-Host " Display name changed to: $NewAppName" -ForegroundColor Green
+Write-Host " You can now import the project with Android Studio." -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Green
-Read-Host "按回车键退出脚本..."
+
+# Wait for exit if running interactively
+if (-not $NewPackage -or -not $NewAppName -or $NewPackage.Trim() -eq "" -or $NewAppName.Trim() -eq "") {
+    Read-Host "Press Enter to exit..."
+}

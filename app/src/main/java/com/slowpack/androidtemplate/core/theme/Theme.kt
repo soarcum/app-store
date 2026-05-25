@@ -1,4 +1,4 @@
-package com.slowpack.androidtemplate.core.theme
+﻿package com.slowpack.androidtemplate.core.theme
 
 import android.app.Activity
 import android.os.Build
@@ -70,3 +70,4 @@ fun AppTheme(
         content = content
     )
 }
+

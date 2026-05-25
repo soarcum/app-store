@@ -1,4 +1,4 @@
-package com.slowpack.androidtemplate.core.crash
+﻿package com.slowpack.androidtemplate.core.crash
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -212,3 +212,4 @@ class CrashActivity : ComponentActivity() {
         finish()
     }
 }
+
