@@ -2,7 +2,7 @@
 # 自动提升 versionCode 与 versionName 小版本，快速提交代码并推送，触发 GitHub 自动构建及推送更新
 
 param (
-    [string]$Notes = "" # 💡 允许从外部直接传入更新日志，以适配 AI 全自动无人值守工作流
+    [string]$Notes = ""
 )
 
 $ErrorActionPreference = "Stop"
