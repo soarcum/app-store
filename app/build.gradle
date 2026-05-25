@@ -6,6 +6,15 @@ plugins {
 // 💡 引入根目录的全局配置中心
 apply from: '../config.gradle'
 
+// 💡 编译期安全读取本地 .github_token 文件，避免在源码中硬编码敏感凭证
+def getGithubToken() {
+    def tokenFile = rootProject.file('.github_token')
+    if (tokenFile.exists()) {
+        return tokenFile.text.trim()
+    }
+    return ""
+}
+
 android {
     namespace rootProject.ext.applicationId
     compileSdk 34
@@ -25,6 +34,7 @@ android {
         // 💡 动态注入编译期常量，供自动更新模块 UpdateManager 读取，避免硬编码
         buildConfigField "String", "GITHUB_OWNER", "\"${rootProject.ext.githubOwner}\""
         buildConfigField "String", "GITHUB_REPO", "\"${rootProject.ext.githubRepo}\""
+        buildConfigField "String", "GITHUB_TOKEN", "\"${getGithubToken()}\""
     }
 
     signingConfigs {

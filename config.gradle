@@ -9,8 +9,8 @@ ext {
     githubRepo = "app-store"
     
     // 版本控制，本地脚本与 CI 脚本会自动对其进行自增
-    versionCode = 2
-    versionName = "1.0.1"
+    versionCode = 3
+    versionName = "1.0.2"
 }
 
 

@@ -48,8 +48,8 @@ object UpdateManager {
     // 💡 动态拼装 GitHub Releases 最新发布 API，数据来自 build.gradle 注入的 BuildConfig
     private val GITHUB_API = "https://api.github.com/repos/${BuildConfig.GITHUB_OWNER}/${BuildConfig.GITHUB_REPO}/releases/latest"
 
-    // 💡 可选的私有仓库 Token。如果是公开仓库，可以保持为空字符串 ""
-    private const val GITHUB_TOKEN = ""
+    // 💡 从 BuildConfig 读取编译期注入的私有仓库 Token，统一管理凭证
+    private val GITHUB_TOKEN = BuildConfig.GITHUB_TOKEN
 
     // 基础 HTTP 请求客户端 (支持长连接超时)
     private val httpClient = OkHttpClient.Builder()
