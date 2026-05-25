@@ -55,6 +55,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.slowpack.appstore.core.updater.UpdateManager
+import com.slowpack.appstore.core.updater.UpdateInfo
+import com.slowpack.appstore.core.updater.DownloadState
 import com.slowpack.appstore.feature.store.model.AppDisplayItem
 import com.slowpack.appstore.feature.store.model.AppInstallStatus
 import com.slowpack.appstore.feature.store.service.StoreManager
@@ -83,6 +86,10 @@ fun AppStoreScreen(modifier: Modifier = Modifier) {
     var apps by remember { mutableStateOf<List<AppDisplayItem>>(emptyList()) }
     var loadError by remember { mutableStateOf<String?>(null) }
     var downloadProgress by remember { mutableStateOf<DownloadProgress?>(null) }
+
+    // 💡 商店自身升级状态变量
+    var storeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var storeDownloadState by remember { mutableStateOf<DownloadState>(DownloadState.Idle) }
 
     // 💡 加载应用列表的函数
     fun loadApps() {

@@ -98,6 +98,13 @@ object UpdateManager {
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     Log.w(TAG, "检测更新失败，HTTP 状态码: ${response.code}")
+                    withContext(Dispatchers.Main) {
+                        android.widget.Toast.makeText(
+                            context,
+                            "⚠️ 商店自更新检测失败！HTTP: ${response.code}\n(提示: 私有库匿名访问会被拒，当前版本 Token 可能为空)",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    }
                     return@withContext null
                 }
 
@@ -129,6 +136,13 @@ object UpdateManager {
             }
         } catch (e: Exception) {
             Log.e(TAG, "检测新版本发生异常: ${e.message}")
+            withContext(Dispatchers.Main) {
+                android.widget.Toast.makeText(
+                    context,
+                    "⚠️ 商店自更新异常: ${e.localizedMessage ?: e.message}\n(请检查手机网络或代理设置)",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
             null
         }
     }
