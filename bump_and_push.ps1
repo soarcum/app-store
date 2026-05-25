@@ -1,4 +1,4 @@
-﻿# === Local Bump & Auto-Deployer Script ===
+# === Local Bump & Auto-Deployer Script ===
 # Automatically bumps version and pushes to GitHub to trigger Actions CI release.
 
 param (
@@ -71,7 +71,9 @@ if (-not [string]::IsNullOrEmpty($Notes)) {
 Write-Host "Updating version fields in $ConfigFile..." -ForegroundColor Gray
 $NewConfigContent = $ConfigContent -replace 'versionCode\s*=\s*\d+', "versionCode = $NewCode"
 $NewConfigContent = $NewConfigContent -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$NewName`""
-Set-Content -Path $ConfigFile -Value $NewConfigContent -Encoding UTF8
+
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText((Get-Item $ConfigFile).FullName, $NewConfigContent, $Utf8NoBom)
 
 try {
     # 6. Git staging and commit transaction
@@ -103,7 +105,7 @@ try {
     Write-Host "[INFO] Make sure your Git author user/email are configured and origin main exists." -ForegroundColor Yellow
     
     # Rollback version bump in config.gradle upon failure
-    Set-Content -Path $ConfigFile -Value $ConfigContent -Encoding UTF8
+    [System.IO.File]::WriteAllText((Get-Item $ConfigFile).FullName, $ConfigContent, $Utf8NoBom)
     Write-Host "Rollback completed: config.gradle has been restored." -ForegroundColor Gray
 }
 
