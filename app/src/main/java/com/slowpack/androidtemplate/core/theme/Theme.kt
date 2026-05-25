@@ -1,4 +1,4 @@
-package com.template.app.core.theme
+package com.slowpack.androidtemplate.core.theme
 
 import android.app.Activity
 import android.os.Build

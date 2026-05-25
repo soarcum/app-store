@@ -1,4 +1,4 @@
-package com.template.app.core.crash
+package com.slowpack.androidtemplate.core.crash
 
 import android.content.Context
 import android.content.Intent

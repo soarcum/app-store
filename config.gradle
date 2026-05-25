@@ -1,8 +1,8 @@
 // 💡 全局唯一配置中心。新建 App 或 Fork 模板后，只需在此修改应用名、包名及 GitHub 仓库即可！
 ext {
     // 应用基础配置
-    applicationId = "com.template.app"
-    appName = "AndroidBoilerplate"
+    applicationId = "com.slowpack.androidtemplate"
+    appName = "android-template"
     
     // GitHub 自动更新配置
     githubOwner = "slowpack"

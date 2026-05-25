@@ -1,4 +1,4 @@
-package com.template.app.core.theme
+package com.slowpack.androidtemplate.core.theme
 
 import androidx.compose.ui.graphics.Color
 

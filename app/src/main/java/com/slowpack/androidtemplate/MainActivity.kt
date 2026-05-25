@@ -1,4 +1,4 @@
-package com.template.app
+package com.slowpack.androidtemplate
 
 import android.os.Bundle
 import android.widget.Toast
@@ -54,11 +54,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.template.app.core.crash.GlobalExceptionHandler
-import com.template.app.core.theme.AppTheme
-import com.template.app.core.updater.DownloadState
-import com.template.app.core.updater.UpdateInfo
-import com.template.app.core.updater.UpdateManager
+import com.slowpack.androidtemplate.core.crash.GlobalExceptionHandler
+import com.slowpack.androidtemplate.core.theme.AppTheme
+import com.slowpack.androidtemplate.core.updater.DownloadState
+import com.slowpack.androidtemplate.core.updater.UpdateInfo
+import com.slowpack.androidtemplate.core.updater.UpdateManager
 import kotlinx.coroutines.launch
 
 /**
