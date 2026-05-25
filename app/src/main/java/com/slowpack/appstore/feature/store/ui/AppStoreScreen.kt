@@ -89,12 +89,21 @@ fun AppStoreScreen(modifier: Modifier = Modifier) {
         scope.launch {
             isLoading = true
             loadError = null
-            val items = StoreManager.loadDisplayItems(context)
-            if (items.isEmpty()) {
-                loadError = "暂未配置任何应用，请检查 data/apps.json"
+            try {
+                val items = StoreManager.loadDisplayItems(context)
+                if (items.isEmpty()) {
+                    loadError = "暂未配置任何应用，请检查 data/apps.json"
+                } else {
+                    apps = items
+                }
+            } catch (e: Exception) {
+                loadError = "拉取配置失败：${e.localizedMessage ?: e.message ?: "未知错误"}\n\n" +
+                        "💡 快速排查指引：\n" +
+                        "1. 若提示 HTTP 404/401 错误：说明当前打包注入的 GitHub Token 无效或不具备读取私有仓库 data/apps.json 的权限，请在根目录检查或重新生成 Token。\n" +
+                        "2. 若提示 Connect Exception / Timeout / UnknownHost：说明当前手机与 GitHub API 的网络不通。由于 GitHub 接口在部分地区受限，请开启手机 VPN 代理后重试。"
+            } finally {
+                isLoading = false
             }
-            apps = items
-            isLoading = false
         }
     }
 

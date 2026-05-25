@@ -31,9 +31,9 @@ object StoreManager {
     private const val TAG = "StoreManager"
     private const val MAX_RETRY = 3
 
-    // 💡 私有仓库中 apps.json 的 Raw 地址
+    // 💡 优先通过 GitHub Contents API 拉取私有仓库中的 apps.json 文件（支持 v3.raw 头部直接返回文本，比 raw.githubusercontent.com 稳定且防封锁）
     private val APPS_JSON_URL =
-        "https://raw.githubusercontent.com/${BuildConfig.GITHUB_OWNER}/${BuildConfig.GITHUB_REPO}/main/data/apps.json"
+        "https://api.github.com/repos/${BuildConfig.GITHUB_OWNER}/${BuildConfig.GITHUB_REPO}/contents/data/apps.json"
 
     private val GITHUB_TOKEN = BuildConfig.GITHUB_TOKEN
 
@@ -55,22 +55,17 @@ object StoreManager {
     // ─── 数据拉取层 ───
 
     /**
-     * 💡 从私有仓库拉取 apps.json 并解析为 AppInfo 列表
+     * 💡 从私有仓库拉取 apps.json 并解析为 AppInfo 列表（不再吞没错误，允许网络与鉴权异常抛出到 UI 层）
      */
     suspend fun fetchAppsList(): List<AppInfo> = withContext(Dispatchers.IO) {
-        try {
-            val request = buildAuthedRequest(APPS_JSON_URL)
-            httpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    Log.w(TAG, "拉取 apps.json 失败，HTTP: ${response.code}")
-                    return@withContext emptyList()
-                }
-                val body = response.body?.string() ?: return@withContext emptyList()
-                parseAppsList(body)
+        val request = buildAuthedRequest(APPS_JSON_URL)
+        httpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                Log.w(TAG, "拉取 apps.json 失败，HTTP 状态码: ${response.code}")
+                throw RuntimeException("GitHub 响应失败 (HTTP ${response.code})")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "拉取 apps.json 异常: ${e.message}")
-            emptyList()
+            val body = response.body?.string() ?: throw RuntimeException("响应体为空")
+            parseAppsList(body)
         }
     }
 
