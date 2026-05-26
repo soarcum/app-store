@@ -1,0 +1,11 @@
+// Global config center. After creating app from template, only modify app name, package name and GitHub repo here!
+ext {
+    applicationId = "app.blankapp"
+    appName = "BlankApp"
+
+    githubOwner = "your-github-username"
+    githubRepo = "your-repo-name"
+
+    versionCode = 1
+    versionName = "1.0.0"
+}

@@ -1,12 +1,22 @@
 [
-  {
-    "id": "diary",
-    "name": "Diary",
-    "packageName": "com.slowpack.diary",
-    "githubOwner": "soarcum",
-    "githubRepo": "diary",
-    "description": "这是一款极简高质感的日记本，支持多媒体混合记录。用户可轻松撰写文字，添加现场录音与珍贵照片，将生活的点滴用立体的方式封存。",
-    "iconLetter": "D",
-    "accentColor": "#009688"
-  }
+    {
+        "id":  "diary",
+        "name":  "Diary",
+        "packageName":  "com.slowpack.diary",
+        "githubOwner":  "soarcum",
+        "githubRepo":  "diary",
+        "description":  "这是一款极简高质感的日记本，支持多媒体混合记录。用户可轻松撰写文字，添加现场录音与珍贵照片，将生活的点滴用立体的方式封存。",
+        "iconLetter":  "D",
+        "accentColor":  "#009688"
+    },
+    {
+        "id":  "novaai",
+        "name":  "NovaAI",
+        "packageName":  "com.soar.novaai",
+        "githubOwner":  "soarcum",
+        "githubRepo":  "novaai",
+        "description":  "A state-of-the-art multi-functional assistant integrating advanced AI intelligence with beautiful design.",
+        "iconLetter":  "N",
+        "accentColor":  "#3F51B5"
+    }
 ]
