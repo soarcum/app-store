@@ -1,15 +1,5 @@
 [
   {
-    "id": "listener",
-    "name": "Listener",
-    "packageName": "com.slowpack.listener",
-    "githubOwner": "soarcum",
-    "githubRepo": "listener",
-    "description": "这是一款高颜值的音频监听与高质量本地录音工具。支持智能声音识别、低延迟音频传输以及后台静默挂载，是您掌上的声音控制大师。",
-    "iconLetter": "L",
-    "accentColor": "#6200EE"
-  },
-  {
     "id": "diary",
     "name": "Diary",
     "packageName": "com.slowpack.diary",
