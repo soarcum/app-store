@@ -73,7 +73,8 @@ Write-Host "Step 2/5: Renaming project..." -ForegroundColor Gray
 Push-Location $OutputDir
 
 try {
-    $RenameArgs = @("-ExecutionPolicy", "Bypass", "-File", ".\rename_project.ps1",
+    $RenamePath = Join-Path $ScriptDir "rename_project.ps1"
+    $RenameArgs = @("-ExecutionPolicy", "Bypass", "-File", $RenamePath,
         "-NewPackage", $PackageName,
         "-NewAppName", $AppName)
     if ($IconPath -and $IconPath.Trim() -ne "" -and (Test-Path $IconPath)) {
