@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 简约科技感十足的前景徽标 (三角形几何折射) -->
+    <path
+        android:fillColor="#FF6C63FF"
+        android:pathData="M54,20 L88,78 L20,78 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,38 L76,72 L32,72 Z" />
+</vector>

@@ -10,13 +10,13 @@
         "accentColor":  "#009688"
     },
     {
-        "id":  "novaai",
-        "name":  "NovaAI",
-        "packageName":  "com.soar.novaai",
+        "id":  "sparkai",
+        "name":  "SparkAI",
+        "packageName":  "com.soar.sparkai",
         "githubOwner":  "soarcum",
-        "githubRepo":  "novaai",
-        "description":  "A state-of-the-art multi-functional assistant integrating advanced AI intelligence with beautiful design.",
-        "iconLetter":  "N",
-        "accentColor":  "#3F51B5"
+        "githubRepo":  "sparkai",
+        "description":  "SparkAI 是一款聚合了多款先进人工智能模型的多功能AI助手，提供聊天、文本处理、代码辅助、图像生成等一站式智能体验，随时随地激发您的创造力。",
+        "iconLetter":  "S",
+        "accentColor":  "#6200EE"
     }
 ]
