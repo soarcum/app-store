@@ -123,9 +123,11 @@ object UpdateManager {
                         val name = asset.getString("name")
                         // 寻找构建产物中的 APK 文件
                         if (name.endsWith(".apk")) {
+                            val downloadUrl = asset.optString("browser_download_url", "")
+                                .ifBlank { asset.getString("url") }
                             return@withContext UpdateInfo(
                                 version = tagName,
-                                downloadUrl = asset.getString("url"),
+                                downloadUrl = downloadUrl,
                                 body = releaseBody
                             )
                         }
@@ -188,7 +190,14 @@ object UpdateManager {
             Log.i(TAG, "准备开始下载新版本，尝试次数 $attempt/$MAX_RETRY")
             onStateChange(DownloadState.Downloading(0, 0, 0))
             try {
-                downloadApk(downloadUrl, file, onStateChange)
+                // If it is a public github.com url, we proxy through mirror.ghproxy.com for the first two attempts
+                val targetUrl = if (attempt < MAX_RETRY && downloadUrl.contains("github.com/")) {
+                    "https://mirror.ghproxy.com/$downloadUrl"
+                } else {
+                    downloadUrl
+                }
+                Log.i(TAG, "从 URL 下载: $targetUrl")
+                downloadApk(targetUrl, file, onStateChange)
                 Log.i(TAG, "下载成功，总大小: ${file.length()} 字节")
                 onStateChange(DownloadState.Installing(file))
                 installApk(context, file)
@@ -218,11 +227,14 @@ object UpdateManager {
     ) {
         val reqBuilder = Request.Builder()
             .url(downloadUrl)
-            .addHeader("Accept", "application/octet-stream")
             .addHeader("User-Agent", "AndroidTemplateUpdater")
         
-        if (GITHUB_TOKEN.isNotEmpty()) {
-            reqBuilder.addHeader("Authorization", "Bearer $GITHUB_TOKEN")
+        // 💡 仅当请求的是 GitHub 官方 API 接口（私有库下载）时，才附加 Authorization Token
+        if (downloadUrl.contains("api.github.com")) {
+            if (GITHUB_TOKEN.isNotEmpty()) {
+                reqBuilder.addHeader("Authorization", "Bearer $GITHUB_TOKEN")
+            }
+            reqBuilder.addHeader("Accept", "application/octet-stream")
         }
 
         val authedRequest = reqBuilder.build()
