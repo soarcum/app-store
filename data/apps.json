@@ -1,22 +1,42 @@
 [
     {
-        "id":  "diary",
-        "name":  "Diary",
-        "packageName":  "com.slowpack.diary",
-        "githubOwner":  "soarcum",
-        "githubRepo":  "diary",
-        "description":  "这是一款极简高质感的日记本，支持多媒体混合记录。用户可轻松撰写文字，添加现场录音与珍贵照片，将生活的点滴用立体的方式封存。",
-        "iconLetter":  "D",
-        "accentColor":  "#009688"
+        "id": "diary",
+        "name": "Diary",
+        "packageName": "com.slowpack.diary",
+        "githubOwner": "soarcum",
+        "githubRepo": "diary",
+        "description": "这是一款极简高质感的日记本，支持多媒体混合记录。用户可轻松撰写文字，添加现场录音与珍贵照片，将生活的点滴用立体的方式封存。",
+        "iconLetter": "D",
+        "accentColor": "#009688"
     },
     {
-        "id":  "sparkai",
-        "name":  "SparkAI",
-        "packageName":  "com.soar.sparkai",
-        "githubOwner":  "soarcum",
-        "githubRepo":  "sparkai",
-        "description":  "SparkAI 是一款聚合了多款先进人工智能模型的多功能AI助手，提供聊天、文本处理、代码辅助、图像生成等一站式智能体验，随时随地激发您的创造力。",
-        "iconLetter":  "S",
-        "accentColor":  "#6200EE"
+        "id": "sparkai",
+        "name": "SparkAI",
+        "packageName": "com.soar.sparkai",
+        "githubOwner": "soarcum",
+        "githubRepo": "sparkai",
+        "description": "SparkAI 是一款聚合了多款先进人工智能模型的多功能AI助手，提供聊天、文本处理、代码辅助、图像生成等一站式智能体验，随时随地激发您的创造力。",
+        "iconLetter": "S",
+        "accentColor": "#6200EE"
+    },
+    {
+        "id": "listener",
+        "name": "AnkiListener",
+        "packageName": "com.ankilistener.app",
+        "githubOwner": "soarcum",
+        "githubRepo": "listener",
+        "description": "AnkiListener 是一款专为高效记忆和语言学习打造的智能听力复习工具。支持与 Anki 卡片深度同步，提供高音质 TTS 发音、子概念智能追问以及 AI 辅助评分诊断，助您随时随地在声音的陪伴下攻克记忆难关。",
+        "iconLetter": "L",
+        "accentColor": "#FF9800"
+    },
+    {
+        "id": "app-store",
+        "name": "App Store",
+        "packageName": "com.slowpack.appstore",
+        "githubOwner": "soarcum",
+        "githubRepo": "app-store",
+        "description": "App Store 是一款面向高效研发效能而设计的精品应用下载与自动更新中心。集中收录并展示了开发者名下的所有高品质极简工具，为您手中的应用提供零延迟的一键检测升级与流畅安装体验。",
+        "iconLetter": "A",
+        "accentColor": "#2196F3"
     }
 ]
