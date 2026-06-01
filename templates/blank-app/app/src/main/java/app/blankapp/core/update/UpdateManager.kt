@@ -142,90 +142,102 @@ object UpdateManager {
     fun downloadApk(context: Context, downloadUrl: String) {
         if (updateState is UpdateState.Downloading) return
 
-        // 默认内置 ghproxy 极速代理下载服务以应对国内 GitHub 直连困难的问题
-        val finalUrl = if (downloadUrl.startsWith("https://github.com")) {
-            "https://ghproxy.net/$downloadUrl"
-        } else {
-            downloadUrl
-        }
-
         updateState = UpdateState.Downloading(0, 0L, 0L)
 
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL(finalUrl)
-                var connection = url.openConnection() as HttpURLConnection
-                connection.connectTimeout = 15000
-                connection.readTimeout = 15000
-                connection.useCaches = false
-                connection.instanceFollowRedirects = true
+            val maxRetry = 3
+            var lastError: String? = null
+            
+            val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            if (dir != null && !dir.exists()) {
+                dir.mkdirs()
+            }
+            val apkFile = File(dir, "update.apk")
 
-                var responseCode = connection.responseCode
-                var redirectCount = 0
-                // 手动且深度处理复杂的 HTTP 3xx 系列重定向地址
-                while ((responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
-                            responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
-                            responseCode == HttpURLConnection.HTTP_SEE_OTHER ||
-                            responseCode == 307 || responseCode == 308) && redirectCount < 5
-                ) {
-                    val newUrl = connection.getHeaderField("Location") ?: break
-                    connection = URL(newUrl).openConnection() as HttpURLConnection
+            for (attempt in 1..maxRetry) {
+                try {
+                    // Try using mirror proxy for the first two attempts, fallback to official URL on the last try
+                    val targetUrl = if (attempt < maxRetry && downloadUrl.startsWith("https://github.com")) {
+                        "https://mirror.ghproxy.com/$downloadUrl"
+                    } else {
+                        downloadUrl
+                    }
+
+                    val url = URL(targetUrl)
+                    var connection = url.openConnection() as HttpURLConnection
                     connection.connectTimeout = 15000
                     connection.readTimeout = 15000
                     connection.useCaches = false
                     connection.instanceFollowRedirects = true
-                    responseCode = connection.responseCode
-                    redirectCount++
-                }
 
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val contentLength = connection.contentLengthLong
-                    val inputStream = connection.inputStream
-
-                    val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                    if (dir != null && !dir.exists()) {
-                        dir.mkdirs()
+                    var responseCode = connection.responseCode
+                    var redirectCount = 0
+                    // Deeply handle redirection redirects
+                    while ((responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                                responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
+                                responseCode == HttpURLConnection.HTTP_SEE_OTHER ||
+                                responseCode == 307 || responseCode == 308) && redirectCount < 5
+                    ) {
+                        val newUrl = connection.getHeaderField("Location") ?: break
+                        connection = URL(newUrl).openConnection() as HttpURLConnection
+                        connection.connectTimeout = 15000
+                        connection.readTimeout = 15000
+                        connection.useCaches = false
+                        connection.instanceFollowRedirects = true
+                        responseCode = connection.responseCode
+                        redirectCount++
                     }
-                    val apkFile = File(dir, "update.apk")
+
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        if (apkFile.exists()) {
+                            apkFile.delete()
+                        }
+                        val contentLength = connection.contentLengthLong
+                        val inputStream = connection.inputStream
+                        val outputStream = FileOutputStream(apkFile)
+                        val buffer = ByteArray(4096)
+                        var bytesRead: Int
+                        var totalBytesRead = 0L
+
+                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                            outputStream.write(buffer, 0, bytesRead)
+                            totalBytesRead += bytesRead
+
+                            val progress = if (contentLength > 0) {
+                                ((totalBytesRead * 100) / contentLength).toInt()
+                            } else {
+                                0
+                            }
+                            updateState = UpdateState.Downloading(progress, contentLength, totalBytesRead)
+                        }
+
+                        outputStream.flush()
+                        outputStream.close()
+                        inputStream.close()
+
+                        // Build shared uri via FileProvider
+                        val apkUri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            apkFile
+                        )
+                        updateState = UpdateState.ReadyToInstall(apkUri, apkFile)
+                        return@launch
+                    } else {
+                        throw RuntimeException("HTTP 响应状态码: $responseCode")
+                    }
+                } catch (e: Exception) {
+                    lastError = e.localizedMessage ?: e.message ?: "未知网络错误"
                     if (apkFile.exists()) {
                         apkFile.delete()
                     }
-
-                    val outputStream = FileOutputStream(apkFile)
-                    val buffer = ByteArray(4096)
-                    var bytesRead: Int
-                    var totalBytesRead = 0L
-
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                        totalBytesRead += bytesRead
-
-                        val progress = if (contentLength > 0) {
-                            ((totalBytesRead * 100) / contentLength).toInt()
-                        } else {
-                            0
-                        }
-                        updateState = UpdateState.Downloading(progress, contentLength, totalBytesRead)
+                    if (attempt < maxRetry) {
+                        Thread.sleep(500) // Delay slightly before retrying
                     }
-
-                    outputStream.flush()
-                    outputStream.close()
-                    inputStream.close()
-
-                    // 构建基于 FileProvider 的安全共享 Content URI 并派发至 ReadyToInstall 状态
-                    val apkUri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        apkFile
-                    )
-                    updateState = UpdateState.ReadyToInstall(apkUri, apkFile)
-                } else {
-                    updateState = UpdateState.Error("下载文件失败，HTTP 状态码: $responseCode")
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                updateState = UpdateState.Error("下载已中断: ${e.localizedMessage}")
             }
+            
+            updateState = UpdateState.Error("下载重试 $maxRetry 次均失败，最近错误: $lastError")
         }
     }
 
